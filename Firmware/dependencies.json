@@ -1,0 +1,11 @@
+{
+  "qmk_repository": "https://github.com/qmk/qmk_firmware.git",
+  "qmk_commit": "08c662f286ddfd12a985f57b584b02eca5af0ae6",
+  "keyboard": "gray_studio/think65v3",
+  "keymap": "keyboard_light",
+  "qmk_cli": "1.2.0",
+  "gcc_version": "14.2.1",
+  "toolchain_archive": "arm-gnu-toolchain-14.2.rel1-darwin-arm64-arm-none-eabi.tar.xz",
+  "toolchain_url": "https://developer.arm.com/-/media/Files/downloads/gnu/14.2.rel1/binrel/arm-gnu-toolchain-14.2.rel1-darwin-arm64-arm-none-eabi.tar.xz",
+  "toolchain_sha256": "c7c78ffab9bebfce91d99d3c24da6bf4b81c01e16cf551eb2ff9f25b9e0a3818"
+}

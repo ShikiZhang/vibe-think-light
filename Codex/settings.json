@@ -1,0 +1,17 @@
+{
+  "enabled": true,
+  "waiting": {
+    "color": "#FFFF00",
+    "pattern": "double",
+    "seconds": 5,
+    "brightness": 100,
+    "period": 1
+  },
+  "complete": {
+    "color": "#00FF00",
+    "pattern": "breathe",
+    "seconds": 3,
+    "brightness": 100,
+    "period": 1
+  }
+}

@@ -1,0 +1,8 @@
+#!/bin/zsh
+set -eu
+kbl_app="${KEYBOARD_LIGHT_APP:-${0:A:h}/dist/Keyboard Light.app/Contents/MacOS/KeyboardLight}"
+if [[ ! -x "$kbl_app" ]]; then
+    print -u2 'Build first: ./build.sh (or set KEYBOARD_LIGHT_APP to the installed executable)'
+    exit 1
+fi
+exec "$kbl_app" --cli "$@"
