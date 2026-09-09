@@ -55,12 +55,8 @@ Boot 期间固件程序不运行，不能打字/调灯。日常使用无需进�
 
 Caps Lock 白色指示层来自 V3 板级实现；提醒时暂时抑制，结束按当前 Caps Lock 状态恢复。UI/CLI 100% 亮度对应板级上限 150，并非将 PCB 限值改为 255。
 
-## 分发对应源码
+## 源码与依赖
 
-发布预编译 `.bin` 时，同时提供依赖源码、许可证和构建说明。完成 setup/build 后在根目录运行：
+本目录包含项目的全部固件改动和 Mac 键位。上游 QMK、ChibiOS、ChibiOS-Contrib、printf 与 LUFA 保留在各自官方仓库；`dependencies.json` 和 QMK 子模块记录锁定具体版本，`setup.sh` 自动获取到 `.deps/`，无需手动拼凑源码。
 
-```sh
-python3 scripts/package-source.py
-```
-
-得到 `dist/vibe-think-light-corresponding-source.tar.gz`，包含本项目源码、固定版本 QMK 和参与本次构建的子模块源码及许可证，排除 Git 历史、构建缓存和本机配置。可在解压后按 `BUILD.txt` 编译。工具链仍按锁定 URL 和哈希独立获取。不要只发布二进制而省略对应源码。
+本项目以源码形式发布。`dist/` 中的 `.bin` 是使用者在本机编译生成的产物，不提交到源码仓库。

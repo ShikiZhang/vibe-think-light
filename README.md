@@ -6,7 +6,7 @@ Think6.5 V3 专用的 macOS 菜单栏程序 + QMK 固件。平时用窗口自由
 
 A native macOS light controller and QMK firmware **exclusively for Think6.5 V3**, with temporary notifications and optional Codex integration.
 
-[开始使用](#开始使用) · [固件与刷机](Firmware/README.md) · [Codex 联动](Codex/README.md) · [测试 Prompt](PROMPT.md) · [USB 协议](PROTOCOL.md)
+[下载源码并构建](#开始使用) · [固件与刷机](Firmware/README.md) · [Codex 联动](Codex/README.md) · [测试 Prompt](PROMPT.md) · [USB 协议](PROTOCOL.md)
 
 ## 能做什么
 
@@ -32,6 +32,8 @@ A native macOS light controller and QMK firmware **exclusively for Think6.5 V3**
 
 ## 开始使用
 
+本项目提供源码，请下载仓库后在自己的 Mac 上构建。可以点击 GitHub 的 **Code → Download ZIP** 并解压，也可以使用下面的 `git clone` 命令。ZIP 下载方式请先在终端进入解压后的仓库目录，再从 `./build.sh` 开始执行。
+
 ### 1. 构建 Mac 程序
 
 先安装 [Xcode Command Line Tools](https://developer.apple.com/xcode/resources/)（`xcode-select --install`），确保 `xcrun swiftc --version` 可用。纯 Mac 程序不需要 Homebrew、QMK 或 Python 第三方包。
@@ -45,7 +47,7 @@ ditto 'dist/Keyboard Light.app' "$HOME/Applications/Keyboard Light.app"
 open "$HOME/Applications/Keyboard Light.app"
 ```
 
-这是原生菜单栏小程序，应用名为 **Keyboard Light / 键盘灯光**。从顶部菜单栏图标打开控制窗口；关闭窗口不会退出菜单栏程序，菜单中可退出。构建脚本使用本地 ad-hoc 签名，没有 Apple 开发者公证。这里只声明源码构建流程；可下载附件以 GitHub Releases 页面实际列出的文件为准。
+这是原生菜单栏小程序，应用名为 **Keyboard Light / 键盘灯光**。从顶部菜单栏图标打开控制窗口；关闭窗口不会退出菜单栏程序，菜单中可退出。构建脚本使用本地 ad-hoc 签名，没有 Apple 开发者公证。本项目以源码形式发布，按以上步骤在本机编译使用。
 
 ### 2. 给 Think6.5 V3 刷一次通信固件
 
@@ -177,4 +179,4 @@ PROTOCOL.md    32 字节协议与状态恢复语义
 PROMPT.md      可直接交给代码助手执行的复现与验收说明
 ```
 
-本项目自有源码使用 **GPL-2.0-or-later**，见 [LICENSE](LICENSE) 和 [第三方说明](THIRD_PARTY_NOTICES.md)。QMK 及其依赖保留各自许可证；包含 Think6.5 V3 板级代码的固件按 GPLv2 及相关依赖条款分发。发布预编译固件时应同时提供相应完整源码包，本仓库提供打包脚本。不代表或隶属于 GrayStudio、QMK 或 OpenAI。
+本项目自有源码使用 **GPL-2.0-or-later**，见 [LICENSE](LICENSE) 和 [第三方说明](THIRD_PARTY_NOTICES.md)。QMK 及其依赖保留各自许可证；包含 Think6.5 V3 板级代码的固件按 GPLv2 及相关依赖条款分发。本仓库包含项目全部自有源码；QMK 和编译依赖由脚本从固定的官方版本获取。不代表或隶属于 GrayStudio、QMK 或 OpenAI。

@@ -23,9 +23,8 @@ all upstream files to later GPL versions.
 
 The source repository contains our overlay rather than a vendored copy of all
 QMK. `Firmware/setup.sh` fetches the pinned upstream sources and Git-recorded
-submodule revisions. `scripts/package-source.py` packages their source files,
-licenses, our overlay and build instructions together for binary distribution.
-No original author notices are removed.
+submodule revisions. This repository publishes source code; users build the
+application and firmware locally. No original author notices are removed.
 
 Arm GNU Toolchain 14.2.Rel1 is a separately downloaded build dependency from
 Arm's official distribution, verified by SHA-256. Python/QMK build tools and
