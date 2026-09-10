@@ -48,7 +48,7 @@ final class LightController: ObservableObject {
                 do { received = try self.transport.transact(LightProtocol.request(1, sequence: UInt8.random(in: 1...254)), deviceID: selected.id) }
                 catch { problem = error.localizedDescription }
             } else {
-                problem = self.transport.think65Present() ? "已检测到 Think6.5 V3，等待通信固件升级。" : "请通过 USB 连接 Think6.5 V3。"
+                problem = self.transport.think65Present() ? "已检测到 Think6.5 V3，等待通信固件升级。" : "请通过 USB 连接 Think6.5 V3 或 Apollo80 R2。"
             }
             DispatchQueue.main.async {
                 self.busy = false; self.devices = found
@@ -58,7 +58,7 @@ final class LightController: ObservableObject {
                 if let received {
                     self.connected = true
                     if !self.dirty { self.state = received }
-                    self.status = "已连接 · \(selected!.name)"
+                    self.status = "已连接 · \(selected!.name)" + (received.backend == "vial" ? " · 电脑播放提醒" : " · 键盘播放提醒")
                 } else { self.connected = false; self.status = problem ?? "未连接" }
             }
         }
@@ -121,7 +121,7 @@ final class LightController: ObservableObject {
                 switch result {
                 case .success(let received):
                     if self.revision == version { self.state = received }
-                    self.message = command == 5 ? "已保存到键盘，断电后仍保留。" : command == 6 ? "已恢复上次保存的灯光。" : command == 3 ? "临时灯效结束后会自动恢复。" : ""
+                    self.message = command == 5 ? "已保存到键盘，断电后仍保留。" : command == 6 ? "已恢复上次保存的灯光。" : command == 3 ? (received.notifying ? "临时灯效结束后会自动恢复。" : "日常灯光已关闭，已跳过提醒。") : ""
                 case .failure(let error):
                     self.message = error.localizedDescription
                     self.connected = false
@@ -173,7 +173,7 @@ struct LightPanel: View {
                     Toggle("开启灯光", isOn: Binding(get: { model.state.enabled }, set: { v in model.edit { $0.enabled = v } })).toggleStyle(.switch)
                 }
                 HStack(spacing: 12) {
-                    ForEach(0..<min(model.state.ledCount, 12), id: \.self) { _ in
+                    ForEach(0..<max(1, min(model.state.ledCount, 12)), id: \.self) { _ in
                         RoundedRectangle(cornerRadius: 8).fill(Color(nsColor: model.state.color).opacity(model.state.enabled ? max(0.12, model.state.percent / 100) : 0.08))
                             .frame(height: 36).shadow(color: Color(nsColor: model.state.color).opacity(model.state.enabled ? 0.22 : 0), radius: 8)
                     }
@@ -199,7 +199,7 @@ struct LightPanel: View {
                     Text("灯效").frame(width: 38, alignment: .leading)
                     Picker("灯效", selection: Binding(get: { model.state.effect }, set: { v in model.edit { $0.effect = v; $0.enabled = true } })) {
                         ForEach(LightProtocol.effects.filter { model.state.effectMask & (1 << $0.0) != 0 }, id: \.0) { id, title, _ in Text(title).tag(id) }
-                        if model.state.effect == 255 { Text("键盘原有灯效").tag(255) }
+                        if model.state.effect == 255 { Text("键盘原有灯效" + (model.state.nativeEffect.map { "（编号 \($0)）" } ?? "")).tag(255) }
                     }.labelsHidden().frame(maxWidth: .infinity)
                 }
                 Text(model.state.capsLock && !model.state.notifying ? "Caps Lock 已开启，键盘的白色指示灯可能覆盖当前颜色。" : (1...4).contains(model.state.effect) ? "内置呼吸灯效自行控制明暗，保持键盘原有行为。" : "使用键盘原有灯效；彩虹和测试模式自行生成颜色。")
@@ -212,10 +212,10 @@ struct LightPanel: View {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(hexError.isEmpty ? model.message : hexError).font(.caption).foregroundStyle(hexError.isEmpty ? Color.secondary : Color.orange).lineLimit(2)
-                    Text("保存后，拔线或关闭程序也能保留当前灯光。").font(.caption).foregroundStyle(.secondary)
+                    Text(model.state.backend == "vial" ? "Vial 暂不支持读取已保存设置；其他日常灯效可在 Vial 中选择。" : "保存后，拔线或关闭程序也能保留当前灯光。").font(.caption).foregroundStyle(.secondary)
                 }
                 Spacer()
-                Button("恢复已保存") { model.send(6) }.disabled(!model.connected || model.busy)
+                Button("恢复已保存") { model.send(6) }.disabled(!model.connected || model.busy || !model.state.canReloadSaved)
                 Button("保存到键盘") { model.send(5) }.buttonStyle(.borderedProminent).tint(.indigo).disabled(!model.connected || model.state.notifying || model.busy)
             }
         }
@@ -236,7 +236,7 @@ struct LightPanel: View {
             Text("keyboardlight set --color '#8B5CF6' --brightness 60 --effect solid\n\nkeyboardlight notify --color '#34D399' --seconds 5 --pattern blink\n\nkeyboardlight restore\n\nkeyboardlight status")
                 .font(.system(size: 12, design: .monospaced)).textSelection(.enabled).padding(16)
                 .frame(maxWidth: .infinity, alignment: .leading).background(Color.primary.opacity(0.045), in: RoundedRectangle(cornerRadius: 8))
-            Text("notify 的计时和恢复由键盘完成；脚本退出后仍会自动恢复。status 返回 JSON，便于其他程序读取。").font(.caption).foregroundStyle(.secondary)
+            Text("Think6.5 的通知由键盘完成；Apollo80 的通知由电脑后台进程完成。CLI 退出后继续播放，Vial 在电脑休眠时暂停并于唤醒后恢复。status 返回 JSON。").font(.caption).foregroundStyle(.secondary)
             HStack { Spacer(); Button("完成") { showAutomation = false }.keyboardShortcut(.defaultAction) }
         }.padding(24).frame(width: 570)
     }

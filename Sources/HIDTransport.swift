@@ -8,6 +8,7 @@ struct LightDevice: Codable, Identifiable, Equatable {
     var name: String
     var vendorID: Int
     var productID: Int
+    var backend: String = "klt1"
 }
 
 private final class ReportInbox {
@@ -17,7 +18,7 @@ private final class ReportInbox {
     init(_ command: UInt8, _ sequence: UInt8) { self.command = command; self.sequence = sequence }
 }
 
-final class HIDTransport {
+final class KLTTransport {
     // A dedicated vendor-defined collection, separate from the keyboard and VIA interfaces.
     static let usagePage = 0xFF60
     static let usage = 0x62

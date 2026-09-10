@@ -67,7 +67,7 @@ struct NotificationPanel: View {
                 Slider(value: $brightness, in: 1...100).accessibilityLabel("提醒亮度")
                 Text("\(Int(brightness.rounded()))%").monospacedDigit().font(.caption).frame(width: 38, alignment: .trailing)
             }
-            Text(!supported ? "所选样式或自定义周期需要更新配套固件。" : pattern == 5 ? "彩虹自动变色；计时结束恢复原灯光。选择设置后点击试播。" : "提醒颜色和亮度独立设置，计时结束恢复原灯光。选择设置后点击试播。")
+            Text(model.state.backend == "vial" && !model.state.enabled ? "日常灯光已关闭，提醒将自动跳过。" : !supported ? "所选样式或自定义周期需要更新配套固件。" : pattern == 5 ? "彩虹自动变色；计时结束恢复原灯光。选择设置后点击试播。" : "提醒颜色和亮度独立设置，计时结束恢复原灯光。选择设置后点击试播。")
                 .font(.caption).foregroundStyle(supported ? Color.secondary : .orange)
         }.padding(16).background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 12)).disabled(!model.connected)
     }

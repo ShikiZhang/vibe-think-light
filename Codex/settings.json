@@ -2,15 +2,15 @@
   "enabled": true,
   "waiting": {
     "color": "#FFFF00",
-    "pattern": "double",
+    "pattern": "blink",
     "seconds": 5,
     "brightness": 100,
-    "period": 1
+    "period": 1.2
   },
   "complete": {
     "color": "#00FF00",
     "pattern": "breathe",
-    "seconds": 3,
+    "seconds": 5,
     "brightness": 100,
     "period": 1
   }

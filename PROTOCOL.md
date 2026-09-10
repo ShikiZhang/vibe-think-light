@@ -1,6 +1,6 @@
 # Keyboard Light USB protocol, KLT1
 
-Think6.5 V3 only (USB VID `0x4753`, PID `0x4003`). Native HID, vendor usage page `0xFF60`, usage `0x62`, 32-byte output/input reports, no report-ID byte. The Mac application opens only this collection. Firmware must explicitly implement this protocol; ordinary QMK, VIA or Vial firmware is not automatically compatible.
+Think6.5 V3 only (USB VID `0x4753`, PID `0x4003`). Native HID, vendor usage page `0xFF60`, usage `0x62`, 32-byte output/input reports, no report-ID byte. The KLT1 backend opens only this collection. The separate Apollo80 Vial backend is documented in [docs/VIAL.md](docs/VIAL.md). Firmware must explicitly implement this protocol; ordinary QMK, VIA or Vial firmware is not automatically compatible.
 
 All multibyte integers are little-endian. Reserved bytes must be zero. Requests with wrong magic or length are ignored. Other errors receive a response. No command enters Boot or changes key bindings.
 
@@ -41,6 +41,6 @@ Stable IDs match the complete standard QMK RGBLight catalog, zero-based: 0 stati
 
 SET changes RAM only. SAVE explicitly persists the normal state; built-in Fn controls retain their original QMK persistence behavior. Notifications capture the full RGBLight config (including power, mode, HSV, speed) once. Replacement notifications retain that baseline. Timeout, CANCEL, or a manual underglow key restores it; a subsequent SET applies a new normal state. Restoration restarts the built-in animation and does not preserve its phase. Normal state is reported while a notification is active. Notifications temporarily suppress the Think6.5 V3 Caps Lock overlay, then restore its current host state.
 
-Scope: this repository supports Think6.5 V3 RGBLight only. It does not implement RGB Matrix, VIA/Vial key remapping, or arbitrary keyboard support. The custom Raw HID collection uses usage `0x62` instead of VIA’s default `0x61`. No HTTP server or network listener is used.
+Scope: this KLT1 protocol supports Think6.5 V3 RGBLight only. It does not implement RGB Matrix, VIA/Vial key remapping, or arbitrary keyboard support. The custom Raw HID collection uses usage `0x62` instead of VIA’s default `0x61`. No HTTP server or network listener is used.
 
 Default cycles (ms): blink 800, breathe 2000, double 1600, heartbeat 1800, rainbow 4000, slow blink 2400. Setting a custom cycle scales the whole animation while keeping its shape/duty cycle. Duration is independent. Solid has no animation cycle.

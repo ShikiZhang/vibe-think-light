@@ -1,6 +1,8 @@
 # Codex 灯光通知
 
-这是可选集成，单独调灯不需要安装它。需要本机可执行的 Keyboard Light、Think6.5 V3 KLT1 v1.2 固件，以及支持 lifecycle hooks 的 Codex 版本。
+这是可选集成，单独调灯不需要安装它。需要本机可执行的 Keyboard Light、支持的键盘（Think6.5 V3 KLT1 v1.2 或 Apollo80 R2 Vial），以及支持 lifecycle hooks 的 Codex 版本。
+
+程序根据设备自动选择通知实现，hook 命令保持相同。Apollo80 由短时后台进程执行，CLI 在 hook 的 2.5 秒超时前返回；日常灯光关闭时跳过提醒。Think6.5 继续由固件播放。连接多把支持的键盘时，在配置中设置 `device`，避免提醒错误的设备；拔插后需重新取得 ID。
 
 ## 安装与启用
 
@@ -32,11 +34,11 @@ python3 Codex/install.py --app '/absolute/path/Keyboard Light.app/Contents/MacOS
 {
   "enabled": true,
   "waiting": {
-    "color": "#FFFF00", "pattern": "double", "seconds": 5,
-    "brightness": 100, "period": 1
+    "color": "#FFFF00", "pattern": "blink", "seconds": 5,
+    "brightness": 100, "period": 1.2
   },
   "complete": {
-    "color": "#00FF00", "pattern": "breathe", "seconds": 3,
+    "color": "#00FF00", "pattern": "breathe", "seconds": 5,
     "brightness": 100, "period": 1
   }
 }
@@ -65,8 +67,8 @@ python3 Codex/install.py --app '/absolute/path/Keyboard Light.app/Contents/MacOS
 
 1. 先手动运行 README 中的绿色/黄色 `notify` 命令，确认 USB、固件与灯光。
 2. 运行 `python3 Codex/test_hook.py`，这是模拟事件单元测试，不等于真实 Codex 已触发。
-3. 信任并重启后，在 Codex 发“你好，请只回复一句话”。回复结束应出现 3 秒绿色呼吸。
-4. 请 Codex 发起一个需要实际回答的结构化问题；应出现 5 秒黄色双闪。回复前不应该被同一轮完成绿灯覆盖。
+3. 信任并重启后，在 Codex 发“你好，请只回复一句话”。回复结束应出现 5 秒绿色呼吸。
+4. 请 Codex 发起一个需要实际回答的结构化问题；应出现 5 秒黄色闪烁，周期 1.2 秒。回复前不应该被同一轮完成绿灯覆盖。
 5. 查看 `~/Library/Caches/KeyboardLight/codex-events.jsonl`。真实事件应有 `event: Stop` / `PreToolUse` / `PermissionRequest`、`action` 和 `exit: 0`。没有记录通常说明 hook 没执行；`exit != 0` 检查 app 路径、键盘连接和参数。
 
 日志只记录时间、事件名、哈希后的任务 ID、动作、退出码，不记录聊天内容；超过约 100 KB 轮转一次。状态文件只保留去重和等待元数据。日志存在也不能代替肉眼确认实际颜色/节奏。

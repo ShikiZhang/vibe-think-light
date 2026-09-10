@@ -1,23 +1,38 @@
 # Vibe Think Light
 
-**让 Think6.5 V3 的灯光跟着你的工作状态变化。**
+**让键盘灯光跟着你的工作状态变化。**
 
-Think6.5 V3 专用的 macOS 菜单栏程序 + QMK 固件。平时用窗口自由调灯；需要时由 CLI 或 Codex hooks 播放提醒，结束后自动恢复原来的灯效。日常灯效沿用键盘内置的 QMK RGBLight 算法。
+支持 Think6.5 V3（配套 QMK 固件）和 Apollo80 R2（已适配 Vial 固件）的 macOS 菜单栏程序。平时用窗口自由调灯；需要时由 CLI 或 Codex hooks 播放提醒，结束后自动恢复原来的灯效。日常灯效沿用键盘内置的 QMK RGBLight 算法。
 
-A native macOS light controller and QMK firmware **exclusively for Think6.5 V3**, with temporary notifications and optional Codex integration.
+A native macOS light controller for Think6.5 V3 (KLT1 firmware) and Apollo80 R2 (Vial RGBLight), with temporary notifications and optional Codex integration.
 
 [下载源码并构建](#开始使用) · [固件与刷机](Firmware/README.md) · [Codex 联动](Codex/README.md) · [测试 Prompt](PROMPT.md) · [USB 协议](PROTOCOL.md)
 
 ## 能做什么
 
-- **手动调灯**：开关、颜色、亮度、42 种内置灯效及其速度/方向变体。没有通知事件时也能独立使用。
+- **手动调灯**：开关、颜色、亮度；Think6.5 支持 42 种内置灯效及其速度/方向变体，Apollo80 支持常亮及保留当前灯效。没有通知事件时也能独立使用。
 - **读取真实状态**：打开程序先读键盘，每 2 秒同步；不会用窗口的初始值覆盖键盘。
 - **临时提醒**：常亮、闪烁、呼吸、双闪、心跳、彩虹、慢闪，共 7 种。颜色、亮度、总时长独立设置；6 种动画支持 0.5–10 秒周期。
-- **自动恢复**：通知结束、手动取消或按 Fn 灯光键后恢复日常设置；连续通知保留最初的日常状态。
-- **命令行与 Codex**：任何本地脚本都可以调用 CLI。可选 hooks 在需要交互时黄灯双闪，在一轮回复完成时绿灯呼吸。
+- **自动恢复**：通知结束或取消后恢复日常设置；连续通知保留最初状态。Think6.5 按 Fn 灯光键先恢复再调灯；Apollo80 检测到外部调灯时结束通知并保留新设置。
+- **命令行与 Codex**：任何本地脚本都可以调用 CLI。可选 hooks 在需要交互时黄灯闪烁，在一轮回复完成时绿灯呼吸。
 - **本地通信**：通过 USB Raw HID 直接控制，不需要云服务、API key、HTTP 服务或常驻网络端口。CLI 无需 GUI 常驻。
 
 ## 支持范围
+
+程序自动识别当前连接的设备，并选择不同的通知实现：
+
+| 键盘 | 通知执行位置 | 固件要求 |
+| --- | --- | --- |
+| Think6.5 V3 | 键盘固件，自行计时恢复 | 本项目 KLT1 固件 |
+| Apollo80 R2 | 电脑上的短时后台进程 | 已验证的 Vial 6 / VIA 9，RGBLight，VID `0x4753` / PID `0x3080` |
+
+Apollo80 不用重新刷机，原有 Vial 改键功能保留。CLI 发起通知后立即返回，后台进程完成动画和恢复，GUI 不必常驻。**仅 Apollo80：日常灯光开关关闭时跳过提醒**，Think6.5 行为保持原样。普通 VIA/Vial 键盘不会自动视为兼容。
+
+Apollo80 的日常灯效只开放“常亮”和“保留当前灯效”，其他效果请在 Vial 中选择；7 种通知动画由电脑生成。普通设置和通知亮度限制在 150/255（保守的软件上限），恢复使用通知前的原始值。协议不报告灯珠数量、Caps Lock 覆盖状态或效果列表，窗口仅显示一块颜色示意。“恢复已保存”不可用，因为该协议没有读取已保存灯光的指令；显式“保存到键盘”仍可用。
+
+电脑休眠期间 Vial 动画暂停，过期通知在唤醒后恢复；拔插后按新连接读取，不把旧通知恢复到新设备。后台进程被强制结束时，下次访问同一连接会尝试恢复。通知中通过 Fn/Vial 调灯会停止通知并保留检测到的新状态；不要同时用多个程序持续调灯。详情见 [Vial 通信与恢复](docs/VIAL.md)。
+
+以下是 Think6.5 V3 固件的具体要求：
 
 | 项目 | 要求 / 范围 |
 | --- | --- |
@@ -28,7 +43,7 @@ A native macOS light controller and QMK firmware **exclusively for Think6.5 V3**
 | Intel Mac | 构建脚本接受 `ARCH=x86_64`，尚未在 Intel 实机验证 |
 | 固件 | 本项目的 KLT1 固件；普通 QMK / VIA / Vial 固件无法直接通信 |
 
-**初代 Think6.5、V2、其他型号不适用，也不能混刷此固件。** 本项目不提供 VIA/Vial 动态改键；附带的是固定 Mac 键位，修改键位需要编辑 `Firmware/keymap.c` 后重新编译。灯光调整和通知参数修改不需要反复刷机。
+**Think6.5 固件不能刷入初代、V2、Apollo80 或其他型号。** 本项目的 Think6.5 固件不提供 VIA/Vial 动态改键；附带的是固定 Mac 键位，修改键位需要编辑 `Firmware/keymap.c` 后重新编译。灯光调整和通知参数修改不需要反复刷机。
 
 ## 开始使用
 
@@ -51,7 +66,7 @@ open "$HOME/Applications/Keyboard Light.app"
 
 ### 2. 给 Think6.5 V3 刷一次通信固件
 
-首次使用请按 [固件说明](Firmware/README.md) 构建并用 QMK Toolbox 刷入。已经刷过本项目 v1.2 固件的键盘可以直接跳过。
+Apollo80 R2 使用已适配的 Vial 固件时跳过此步骤。Think6.5 首次使用请按 [固件说明](Firmware/README.md) 构建并用 QMK Toolbox 刷入。已经刷过本项目 v1.2 固件的键盘可以直接跳过。
 
 **仅在刷固件时进入 Boot。** 日常调灯时键盘应处于能正常打字的状态；刷机成功后通常自动退出 Boot。软件不会自动进入 Boot 或自动刷机。
 
@@ -79,18 +94,18 @@ open "$HOME/Applications/Keyboard Light.app"
 ./keyboardlight effects
 ./keyboardlight set --color '#8B5CF6' --brightness 60 --effect solid --power on
 
-# 完成：高饱和绿色呼吸，100% 亮度，持续 3 秒，每周期 1 秒
-./keyboardlight notify --color '#00FF00' --brightness 100 --pattern breathe --seconds 3 --period 1
+# 完成：高饱和绿色呼吸，100% 亮度，持续 5 秒，每周期 1 秒
+./keyboardlight notify --color '#00FF00' --brightness 100 --pattern breathe --seconds 5 --period 1
 
-# 待确认：高饱和黄色双闪，100% 亮度，持续 5 秒，每周期 1 秒
-./keyboardlight notify --color '#FFFF00' --brightness 100 --pattern double --seconds 5 --period 1
+# 待确认：高饱和黄色闪烁，100% 亮度，持续 5 秒，每周期 1.2 秒
+./keyboardlight notify --color '#FFFF00' --brightness 100 --pattern blink --seconds 5 --period 1.2
 
 ./keyboardlight restore  # 取消临时提醒
 ./keyboardlight save     # 显式保存日常灯光
 ./keyboardlight reset    # 重新读取已保存灯光
 ```
 
-设备命令返回 JSON，失败以非零状态退出。`effects` 输出制表符分隔的 ID / 命令名 / 中文名，`--help` 输出帮助。`list` 返回设备 ID；连接多把 Think6.5 V3 时给设备命令加 `--device ID`。ID 来自系统注册表，拔插后可能变化。
+设备命令返回 JSON，失败以非零状态退出。`effects` 输出制表符分隔的 ID / 命令名 / 中文名，`--help` 输出帮助。`list` 返回设备 ID；连接多把支持的键盘时给设备命令加 `--device ID`。ID 来自系统注册表，拔插后可能变化。
 
 | 参数 | 范围 |
 | --- | --- |
@@ -116,8 +131,8 @@ python3 Codex/install.py
 
 | 事件 | 默认提醒 |
 | --- | --- |
-| 需要交互 / 权限确认 | 黄色 `#FFFF00` 双闪，100%，5 秒，周期 1 秒 |
-| 一轮回复结束 | 绿色 `#00FF00` 呼吸，100%，3 秒，周期 1 秒 |
+| 需要交互 / 权限确认 | 黄色 `#FFFF00` 闪烁，100%，5 秒，周期 1.2 秒 |
+| 一轮回复结束 | 绿色 `#00FF00` 呼吸，100%，5 秒，周期 1 秒 |
 
 这些默认值可在 `keyboard-light.json` 随时修改，下次事件立即读取。GUI 的手动通知预设与 Codex 的配置互相独立。当前只自动区分“待交互”和“回复完成”；其他用途可以自己从脚本调用 CLI。
 
@@ -146,7 +161,7 @@ python3 Codex/install.py
 ./test.sh
 ```
 
-包含 C 固件状态机 + UBSan、Swift 协议、Python hook 和安装器、Mac 程序构建、CLI 参数验证。默认不刷机、不改实际灯光、不安装用户 hooks。
+包含 C 固件状态机 + UBSan、Swift 协议与 Vial 通知状态机、Python hook 和安装器、Mac 程序构建、CLI 参数验证。默认不刷机、不改实际灯光、不安装用户 hooks。
 
 实体 USB 回归需单独选择：
 
@@ -154,11 +169,11 @@ python3 Codex/install.py
 ./scripts/test-hardware.sh --allow-light-changes
 ```
 
-它要求恰好连接一把兼容键盘，会短暂调光并恢复；不会保存 EEPROM。硬件颜色和节奏仍需肉眼确认。把 [PROMPT.md](PROMPT.md) 交给 Codex 或其他代码助手，可以按同一验收流程复现。实际验证范围见 [测试记录](docs/VALIDATION.md)。
+它要求恰好连接一把兼容 Think6.5 键盘，会短暂调光并恢复；不会保存 EEPROM。Apollo80 实体回归使用 `python3 Tests/vial_hardware_test.py --allow-light-changes`，验证后台恢复、替换、取消、进程异常恢复和关灯跳过。硬件颜色和节奏仍需肉眼确认。把 [PROMPT.md](PROMPT.md) 交给 Codex 或其他代码助手，可以按同一验收流程复现。实际验证范围见 [测试记录](docs/VALIDATION.md)。
 
 ## 常见问题
 
-**能打字，但程序没找到灯光接口？** 普通固件没有 KLT1。确认 V3 型号并刷本项目固件；不要为日常调灯进入 Boot。关闭可能独占 USB 的工具后重试。
+**能打字，但程序没找到灯光接口？** Think6.5 需要 KLT1 固件；Apollo80 必须匹配已适配的 Vial 固件。其他型号暂不支持。不要为日常调灯进入 Boot；关闭可能占用 USB 的工具后重试。
 
 **一直白色？** 先检查 Caps Lock：V3 原生大写指示层会覆盖普通灯色，通知期间会临时隐藏它。若刷完后任何灯效都不变化，核对是否误用了 GCC 15；本项目实测 GCC 14.2.1 正常、GCC 15.2 构建曾出现 WS2812 常白。详见固件说明。
 
@@ -166,7 +181,7 @@ python3 Codex/install.py
 
 **提示需要动态调速固件？** `--period` 需要 v1.2 协议能力。升级到本项目当前固件；旧版应先去掉周期参数。
 
-**退出程序后提醒能恢复吗？** 通知的倒计时在键盘固件上运行；即使 GUI/CLI 退出也会在到期后恢复。恢复内置动画时从新的动画相位开始。
+**退出程序后提醒能恢复吗？** Think6.5 的倒计时在键盘固件上运行；Apollo80 使用独立的短时后台进程。两者都允许 GUI/CLI 退出后继续播放，但 Apollo80 需要电脑保持运行；强制终止后台进程后须再次访问设备才能恢复。恢复内置动画时从新的动画相位开始。
 
 ## 项目结构与许可
 

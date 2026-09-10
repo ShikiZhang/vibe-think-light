@@ -5,7 +5,7 @@
 ## 可直接复制的 Prompt
 
 ```text
-你正在检查 vibe-think-light：Think6.5 V3 专用的 macOS 菜单栏灯光程序、CLI、QMK 固件和可选 Codex hooks。
+你正在检查 vibe-think-light：支持 Think6.5 V3 KLT1 和 Apollo80 R2 Vial 的 macOS 菜单栏灯光程序、CLI、Think6.5 QMK 固件和可选 Codex hooks。
 请读取 README.md、Firmware/README.md、Codex/README.md、PROTOCOL.md 和本文件，然后按下面要求完成复现和测试。
 
 本次模式：软件测试（默认）。
@@ -14,7 +14,7 @@
 1. 识别操作系统、架构、Swift/Clang/Python 版本和 git 状态。保留现有未提交改动。
 2. 运行 ./test.sh，记录退出码及每组 PASS/失败。它包含固件 UBSan、Swift 协议、hook、安装器、Mac 构建和 CLI 参数检查。
 3. 检查 dist/Keyboard Light.app 的 Info.plist、架构及 ad-hoc 签名。运行 ./keyboardlight --help 和 effects；核对 42 个稳定效果 ID、7 种通知样式。
-4. 检查设备发现和发送路径都匹配 Think6.5 V3 VID 0x4753 / PID 0x4003 及 Raw HID usage 0xFF60:0x62；不得打开普通键盘输入接口。
+4. 检查 KLT1 路径仅匹配 Think6.5 V3 VID 0x4753 / PID 0x4003、usage 0xFF60:0x62；Vial 路径仅匹配 Apollo80 R2 VID 0x4753 / PID 0x3080、usage 0xFF60:0x61，并核对 Vial UID/协议。不得打开普通键盘输入接口。
 5. 检查全部代码和文档没有依赖作者的绝对路径、内部域名、私人备份、真实聊天日志或凭据。工具链和依赖必须来自锁定的官方来源。
 6. 固件构建可在具备依赖时运行 Firmware/setup.sh 和 Firmware/build-firmware.sh；它们不刷机。记录 QMK 提交、GCC 14.2.1、产物大小和 SHA-256。若无法下载/无工具链，说明阻碍，不得把 C stub 测试说成完整 QMK 编译。
 7. 不自动安装真实 Codex hooks，不改用户 config.toml、信任记录、EEPROM、键位或固件；不进入 Boot。安装器验证只能使用临时目录。不要发送实际灯光命令，除非本次模式明确允许。
@@ -32,14 +32,14 @@
 | 命令行 | `Sources/main.swift`，参数先验证再访问 USB；设备命令 JSON，effects 为 TSV；失败非零退出 |
 | 通信 | `Sources/HIDTransport.swift`，只开 V3 专用 Raw HID，32 字节、无报告 ID 前缀；匹配 magic/命令/序号；ACK 等待上限约 1.2 秒 |
 | 协议 | `Sources/Protocol.swift` + `PROTOCOL.md`，稳定 ID、不随 QMK 编译枚举偏移；mask 表示支持能力；旧通知 mask=0 回退为前三种 |
-| 固件状态机 | `Firmware/keyboard_light.c`，保存完整日常 RGBLight config；所有通知恢复由键盘端计时执行 |
+| 固件状态机 | `Firmware/keyboard_light.c`，保存完整日常 RGBLight config；Think6.5 通知由键盘端计时恢复；Apollo80 见 `Sources/HostNotification.swift` 的后台执行与恢复日志 |
 | Mac 键位 | `Firmware/keymap.c`，两层 LAYOUT_all，两个 Enter 槽均 KC_ENT；Fn=MO(1)，Fn+右上反引号为 Boot |
 | Codex 事件 | `Codex/keyboard-light-hook.py`，等待/完成去重、异步等待保留、跨任务黄灯优先、有限锁等待、异常不阻塞 |
 | 安装与卸载 | `Codex/install.py`，合并自身定义，保留其他 hook/设置，幂等，可选 CODEX_HOME；不自动信任 |
 
 ## 不变量与验收要点
 
-1. **仅 Think6.5 V3。** VID/PID 和专用 usage 同时过滤；不能宣传支持初代/V2/其他 QMK 键盘。
+1. **限定两款设备。** VID/PID 和专用 usage 同时过滤；Apollo80 还需匹配已验证的 Vial UID/协议。不能宣传任意 QMK/VIA/Vial 兼容。
 2. **日常效果一致。** 42 个 ID 0–41，原生 QMK RGBLight 算法不做宿主端重绘。原生呼吸仍控制自身亮度，通知呼吸单独实现。
 3. **读取不写入。** 打开窗口、GET、轮询都不覆盖设备；SET 只改 RAM；SAVE 是明确的 EEPROM 操作；通知时 SAVE 返回错误。
 4. **可靠恢复。** 通知 replacement 保留最初 baseline；超时/CANCEL/手动灯光键恢复；SET 应用新 baseline。关灯状态、速度和 Caps Lock 指示层也应正确处理。恢复的是设置，不要求动画相位连续。
@@ -47,7 +47,7 @@
 6. **亮度限制。** API/CLI 100% 按 maxBrightness=150 换算。绿色和黄色配置均 full saturation；不要将板级亮度上限改成 255。
 7. **参数安全。** 非有限数字、超范围值、未知选项/效果、重复参数、坏报文均失败；不发送无效 USB 请求。不执行事件携带的 prompt 或工具正文。
 8. **提醒不决定审批。** hooks 只通知，输出 `{}`，出错不阻塞工作。异步提问 PostToolUse 不代表用户已回答；Stop 不应覆盖本轮待确认黄灯。Stop 是一轮回复结束，不是多轮目标完成判定。
-9. **默认预设。** waiting=#FFFF00/double/100%/5s/1s；complete=#00FF00/breathe/100%/3s/1s。GUI 预设与 hook 配置独立。
+9. **默认预设。** waiting=#FFFF00/blink/100%/5s/1.2s；complete=#00FF00/breathe/100%/5s/1s。GUI 预设与 hook 配置独立。
 10. **编译兼容。** 固定 QMK 和 GCC 14.2.1；不要升级到此前在该板观察到灯光异常的 GCC 15。不能仅凭编译通过断言波形正确。
 
 ## 可选模式：实体 USB 测试
@@ -63,7 +63,7 @@
 如果键盘断开、多设备无法确定、当前通知未结束，停止硬件部分并解释原因。
 ```
 
-手动最小验收：绿色呼吸持续 3s/周期 1s；黄色双闪持续 5s/周期 1s；二者到期均恢复。测 Caps Lock 开/关、日常关灯、连续替换提醒和 Fn 调灯取消。每次只测一项，避免互相覆盖；不要调用 SAVE。软件脚本无法确认用户实际看到的颜色，应在报告中分开记录 USB 证据与肉眼确认。
+手动最小验收：绿色呼吸持续 5s/周期 1s；黄色闪烁持续 5s/周期 1.2s；二者到期均恢复。测 Caps Lock 开/关、日常关灯、连续替换提醒和 Fn 调灯取消。每次只测一项，避免互相覆盖；不要调用 SAVE。软件脚本无法确认用户实际看到的颜色，应在报告中分开记录 USB 证据与肉眼确认。
 
 ## 可选模式：真实 Codex 生命周期测试
 
@@ -97,3 +97,7 @@ Mac app：构建、签名、架构；GUI 是否实际打开验证
 隐私与发布：已检查范围，不包含用户路径/日志/凭据
 改动与剩余问题：具体文件和原因
 ```
+
+## 可选模式：Apollo80 Vial 实体检查
+
+运行 `python3 Tests/vial_hardware_test.py --allow-light-changes`。仅短暂改变 RAM 灯光，不保存 EEPROM、改键或刷机。验证 CLI 及时返回、后台独立恢复、替换、取消、异常进程恢复和日常关灯跳过。Vial 原生效果只开放常亮或保留，不能把 QMK 完整效果枚举直接套在未知固件上。Think6.5 日常关灯仍允许通知；仅 Vial 关灯跳过。实机 USB 回读与肉眼效果分别报告。

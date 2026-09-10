@@ -31,7 +31,7 @@ class TestHook(unittest.TestCase):
    hook.process(self.event('PermissionRequest',tool_name='Bash'),Path(d),hook.DEFAULTS,emit)
    other=self.event('Stop');other['session_id']='other'
    hook.process(other,Path(d),hook.DEFAULTS,emit)
-   self.assertEqual(len(commands),1);self.assertIn('double',commands[0]);self.assertNotIn('Bash',commands[0])
+   self.assertEqual(len(commands),1);self.assertIn('blink',commands[0]);self.assertNotIn('Bash',commands[0])
  def test_period_argument(self):
   cfg={"complete":dict(hook.DEFAULTS["complete"],period=1.2)}
   args=hook.command_for("complete",cfg);self.assertEqual(args[-2:],["--period","1.2"])

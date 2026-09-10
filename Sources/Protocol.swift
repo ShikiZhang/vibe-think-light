@@ -21,6 +21,9 @@ struct LightState: Codable, Equatable {
     var remainingMS = 0
     var notificationMask = 127
     var adjustableNotificationTiming = false
+    var backend = "klt1"
+    var canReloadSaved = true
+    var nativeEffect: Int? = nil
 
     var percent: Double { maxBrightness > 0 ? Double(brightness) / Double(maxBrightness) * 100 : 0 }
     var color: NSColor {

@@ -17,8 +17,8 @@ SETTINGS = CODEX_HOME_DIR / 'keyboard-light.json'
 CACHE = Path.home() / 'Library/Caches/KeyboardLight'
 QUESTION = re.compile(r'(^|[._:])request_user_input(?:_async)?$')
 DEFAULTS = {'enabled': True,
-            'waiting': {'color': '#FFFF00', 'pattern': 'double', 'seconds': 5, 'brightness': 100, 'period': 1},
-            'complete': {'color': '#00FF00', 'pattern': 'breathe', 'seconds': 3, 'brightness': 100, 'period': 1}}
+            'waiting': {'color': '#FFFF00', 'pattern': 'blink', 'seconds': 5, 'brightness': 100, 'period': 1.2},
+            'complete': {'color': '#00FF00', 'pattern': 'breathe', 'seconds': 5, 'brightness': 100, 'period': 1}}
 
 def classify(event, state, now):
     """Only event metadata is inspected; never parse prompts/tool code as commands."""

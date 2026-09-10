@@ -2,7 +2,7 @@
 import Foundation
 @main struct HardwareTest {
  static func main() throws {
-  let transport = HIDTransport()
+  let transport = KLTTransport()
   let devices = transport.devices()
   guard devices.count == 1 else { throw LightError.message("Hardware test requires exactly one compatible keyboard") }
   let device = devices[0].id

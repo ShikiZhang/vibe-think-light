@@ -79,7 +79,9 @@ func runCLI(_ args: [String]) throws {
     }
 }
 
-if CommandLine.arguments.contains("--cli") {
+if CommandLine.arguments.count == 4 && CommandLine.arguments[1] == "--vial-worker" {
+    VialHost.runWorker(deviceID: CommandLine.arguments[2], generation: CommandLine.arguments[3])
+} else if CommandLine.arguments.contains("--cli") {
     do { try runCLI(Array(CommandLine.arguments.dropFirst(2))) }
     catch { FileHandle.standardError.write(Data((error.localizedDescription + "\n").utf8)); exit(1) }
 } else {
